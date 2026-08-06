@@ -612,7 +612,7 @@ async def main():
         await bot.start()
     await pytgcalls.start()
     print("✅ Laya Music Bot is running!")
-    from pyrogram.idle import idle
+    from pyrogram import idle
     await idle()
 
 
