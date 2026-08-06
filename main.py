@@ -75,18 +75,26 @@ async def ping(_, message: Message):
     )
 
 
-@client.on_message(filters.command("start", config.PREFIXES) & ~filters.bot)
+@client.on_message(filters.command(["start", "help"]) & filters.private)
 @language
 @handle_error
-async def start(_, message: Message, lang):
-    await message.reply_text(lang["startText"] % message.from_user.mention)
+async def start_private(_, message: Message, lang):
+    cmd = message.command[0]
+    if cmd == "start":
+        await message.reply_text(lang["startText"] % message.from_user.mention)
+    else:
+        await message.reply_text(lang["helpText"].replace("<prefix>", config.PREFIXES[0]))
 
 
-@client.on_message(filters.command("help", config.PREFIXES) & ~filters.bot)
+@client.on_message(filters.command(["start", "help"], config.PREFIXES) & ~filters.private & ~filters.bot)
 @language
 @handle_error
-async def help(_, message: Message, lang):
-    await message.reply_text(lang["helpText"].replace("<prefix>", config.PREFIXES[0]))
+async def start_group(_, message: Message, lang):
+    cmd = message.command[0]
+    if cmd == "start":
+        await message.reply_text(lang["startText"] % message.from_user.mention)
+    else:
+        await message.reply_text(lang["helpText"].replace("<prefix>", config.PREFIXES[0]))
 
 
 @client.on_message(filters.command(["p", "play"], config.PREFIXES) & ~filters.private)
