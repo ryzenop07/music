@@ -28,7 +28,7 @@ from pytgcalls.types.stream import MediaStream
 from pyrogram.raw.types import InputPeerChannel
 from pytgcalls.types import AudioQuality, VideoQuality
 from pyrogram.raw.functions.phone import CreateGroupCall
-from pytgcalls.exceptions import NoActiveGroupCall
+from pytgcalls.exceptions import NoActiveGroupCall  # noqa
 
 
 safone = {}
@@ -57,13 +57,29 @@ async def start_stream(song: Song, lang):
         except BaseException:
             pass
     infomsg = await app.send_message(chat_id, lang["downloading"])
+    await _ensure_vc(chat_id)
+    await pytgcalls.play(chat_id, get_quality(song))
+    await set_title(chat_id, song.title, client=app)
+    thumb = await generate_cover(song.title, chat.title, chat_id, song.thumb)
+    requested_by = (
+        song.requested_by.mention
+        if song.requested_by
+        else (song.request_msg.sender_chat.title if song.request_msg.sender_chat else "Unknown")
+    )
+    safone[chat_id] = await app.send_photo(
+        chat_id,
+        photo=thumb,
+        caption=lang["playing"] % (
+            song.title, song.source, song.duration, chat_id, requested_by,
+        ),
+    )
+    await infomsg.delete()
+    if os.path.exists(thumb):
+        os.remove(thumb)
 
+
+async def _ensure_vc(chat_id: int):
     try:
-        await pytgcalls.play(
-            chat_id,
-            get_quality(song),
-        )
-    except (NoActiveGroupCall):
         peer = await app.resolve_peer(chat_id)
         await app.invoke(
             CreateGroupCall(
@@ -74,34 +90,8 @@ async def start_stream(song: Song, lang):
                 random_id=app.rnd_id() // 9000000000,
             )
         )
-        return await start_stream(song, lang)
-    await set_title(chat_id, song.title, client=app)
-    thumb = await generate_cover(
-        song.title,
-        chat.title,
-        chat_id,
-        song.thumb,
-    )
-    requested_by = (
-        song.requested_by.mention
-        if song.requested_by
-        else (song.request_msg.sender_chat.title if song.request_msg.sender_chat else "Unknown")
-    )
-    safone[chat_id] = await app.send_photo(
-        chat_id,
-        photo=thumb,
-        caption=lang["playing"]
-        % (
-            song.title,
-            song.source,
-            song.duration,
-            chat_id,
-            requested_by,
-        ),
-    )
-    await infomsg.delete()
-    if os.path.exists(thumb):
-        os.remove(thumb)
+    except Exception:
+        pass
 
 
 def get_quality(song: Song) -> MediaStream:
