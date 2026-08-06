@@ -609,7 +609,11 @@ async def closed_vc(_, update: Update):
 async def main():
     await app.start()
     if config.BOT_TOKEN:
-        await bot.start()
+        try:
+            await bot.start()
+        except Exception as e:
+            print(f"⚠️ Bot client failed to start: {e}")
+            print("⚠️ Running with userbot only...")
     await pytgcalls.start()
     print("✅ Laya Music Bot is running!")
     from pyrogram import idle
