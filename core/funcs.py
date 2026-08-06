@@ -221,7 +221,7 @@ async def generate_cover(title, ctitle, chatid, thumbnail):
     font2 = ImageFont.truetype("theme/font.ttf", 60)
     draw.text(
         (20, 45),
-        f"Playing on: {ctitle[:14]}...",
+        f"🎵 Laya Music | {ctitle[:12]}...",
         fill="white",
         stroke_width=1,
         stroke_fill="white",
@@ -229,7 +229,7 @@ async def generate_cover(title, ctitle, chatid, thumbnail):
     )
     draw.text(
         (25, 595),
-        f"{title[:27]}...",
+        f"♪ {title[:25]}...",
         fill="white",
         stroke_width=2,
         stroke_fill="white",

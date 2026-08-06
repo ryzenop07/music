@@ -37,10 +37,12 @@ from core import (
 
 
 REPO = """
-🤖 **Music Player**
-
-- Repo: [GitHub](https://github.com/AsmSafone/MusicPlayer)
-- License: AGPL-3.0-or-later
+╔══「 🎵 𝗟𝗔𝗬𝗔 𝗠𝗨𝗦𝗜𝗖 」══╗
+🤖 **Laya Music Bot**
+🔗 **Repo:** [GitHub](https://github.com/AsmSafone/MusicPlayer)
+📜 **License:** AGPL-3.0-or-later
+💜 *Vibe Different with Laya~*
+╚══════════════════════╝
 """
 
 if config.BOT_TOKEN:
@@ -65,7 +67,12 @@ async def repo(_, message: Message):
 @client.on_message(filters.command("ping", config.PREFIXES) & ~filters.bot)
 @handle_error
 async def ping(_, message: Message):
-    await message.reply_text(f"🤖 **Pong!**\n`{pytgcalls.ping} ms`")
+    await message.reply_text(
+        f"╔══「 🏓 𝗣𝗢𝗡𝗚! 」══╗\n"
+        f"💚 **Laya is alive & vibing!**\n"
+        f"⚡ **Latency:** `{pytgcalls.ping} ms`\n"
+        f"╚══════════════════════╝"
+    )
 
 
 @client.on_message(filters.command("start", config.PREFIXES) & ~filters.bot)
