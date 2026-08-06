@@ -606,5 +606,14 @@ async def closed_vc(_, update: Update):
         clear_queue(chat_id)
 
 
-client.start()
-pytgcalls.run()
+async def main():
+    await app.start()
+    if config.BOT_TOKEN:
+        await bot.start()
+    await pytgcalls.start()
+    print("✅ Laya Music Bot is running!")
+    from pyrogram.idle import idle
+    await idle()
+
+
+app.run(main())
