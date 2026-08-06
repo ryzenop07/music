@@ -50,20 +50,21 @@ pytgcalls = PyTgCalls(app)
 
 async def start_stream(song: Song, lang):
     chat = song.request_msg.chat
-    if safone.get(chat.id) is not None:
+    chat_id = chat.id
+    if safone.get(chat_id) is not None:
         try:
-            await safone[chat.id].delete()
+            await safone[chat_id].delete()
         except BaseException:
             pass
-    infomsg = await song.request_msg.reply_text(lang["downloading"])
+    infomsg = await app.send_message(chat_id, lang["downloading"])
 
     try:
         await pytgcalls.play(
-            chat.id,
+            chat_id,
             get_quality(song),
         )
     except (NoActiveGroupCall):
-        peer = await app.resolve_peer(chat.id)
+        peer = await app.resolve_peer(chat_id)
         await app.invoke(
             CreateGroupCall(
                 peer=InputPeerChannel(
@@ -74,28 +75,29 @@ async def start_stream(song: Song, lang):
             )
         )
         return await start_stream(song, lang)
-    await set_title(chat.id, song.title, client=app)
+    await set_title(chat_id, song.title, client=app)
     thumb = await generate_cover(
         song.title,
         chat.title,
-        chat.id,
+        chat_id,
         song.thumb,
     )
-    safone[chat.id] = await song.request_msg.reply_photo(
+    requested_by = (
+        song.requested_by.mention
+        if song.requested_by
+        else (song.request_msg.sender_chat.title if song.request_msg.sender_chat else "Unknown")
+    )
+    safone[chat_id] = await app.send_photo(
+        chat_id,
         photo=thumb,
         caption=lang["playing"]
         % (
             song.title,
             song.source,
             song.duration,
-            song.request_msg.chat.id,
-            (
-                song.requested_by.mention
-                if song.requested_by
-                else song.request_msg.sender_chat.title
-            ),
+            chat_id,
+            requested_by,
         ),
-        quote=False,
     )
     await infomsg.delete()
     if os.path.exists(thumb):
