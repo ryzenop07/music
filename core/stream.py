@@ -66,7 +66,8 @@ async def start_stream(song: Song, lang):
         await app.get_chat(chat_id)
     except Exception:
         try:
-            await app.join_chat(chat_id)
+            link = await pytgcalls._app._bind_client._app.export_chat_invite_link(chat_id)
+            await app.join_chat(link)
         except Exception:
             pass
 

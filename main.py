@@ -58,6 +58,20 @@ else:
     client = app
 
 
+@app.on_message(filters.new_chat_members)
+async def auto_join_userbot(_, message: Message):
+    for member in message.new_chat_members:
+        if member.is_bot:
+            try:
+                await app.get_chat(message.chat.id)
+            except Exception:
+                try:
+                    link = await client.export_chat_invite_link(message.chat.id)
+                    await app.join_chat(link)
+                except Exception:
+                    pass
+
+
 @client.on_message(filters.command("repo", config.PREFIXES + ["/"]) & ~filters.bot)
 @handle_error
 async def repo(_, message: Message):
