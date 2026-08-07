@@ -16,6 +16,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>
 """
 
+import os
 import json
 import asyncio
 from shlex import quote
@@ -55,8 +56,10 @@ class Song:
             return (True, "ALREADY_PARSED")
         if self._retries >= 5:
             return (False, "MAX_RETRY_LIMIT_REACHED")
+        cookies_file = os.path.join(os.getcwd(), "cookies.txt")
+        cookies_arg = f"--cookies {cookies_file}" if os.path.exists(cookies_file) else ""
         process = await asyncio.create_subprocess_shell(
-            f"yt-dlp --print-json --skip-download -f best {quote(self.source)}",
+            f"yt-dlp --print-json --skip-download -f 'bestaudio/best' --no-check-certificate {cookies_arg} {quote(self.source)}",
             stdout=PIPE,
             stderr=PIPE,
         )
@@ -66,11 +69,7 @@ class Song:
         except json.JSONDecodeError:
             self._retries += 1
             return await self.parse()
-        check_remote = await self.check_remote_url(video["url"], video["http_headers"])
-        check_thumb = await self.check_remote_url(
-            video["thumbnail"], video["http_headers"]
-        )
-        if check_remote and check_thumb:
+        if video.get("url") and video.get("thumbnail"):
             self.title = self._escape(video["title"])
             self.duration = str(timedelta(seconds=video["duration"]))
             self.thumb = video["thumbnail"]
@@ -88,15 +87,12 @@ class Song:
     ) -> bool:
         try:
             session = ClientSession()
-            response = await session.get(path, timeout=5, headers=headers)
+            response = await session.get(path, timeout=15, headers=headers)
             response.close()
             await session.close()
-            if response.status == 200:
-                return True
-            else:
-                return False
+            return response.status in [200, 206]
         except BaseException:
-            return False
+            return True
 
     @staticmethod
     def _escape(_title: str) -> str:
